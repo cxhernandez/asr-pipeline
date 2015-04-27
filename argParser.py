@@ -17,8 +17,6 @@
 # --> where "--inputfile" can be really anything.
 #
 # 3. Get the values of optional arguments:
-# x = ap.getOptionalArg("--verbose")
-# --> getOptionalArg will return False if this argument was not specified by the user.
 #
 #
 
@@ -48,7 +46,7 @@ class ArgParser:
 			i = self.args.index(flag)
 			return self.args[i+1]
 		else:
-			return False
+			return None
 	
 	# This method will return a list of tokens following 'flag', but not including
 	# tokens which start with "--"
@@ -93,4 +91,21 @@ class ArgParser:
 			return returnList
 		else:
 			return None
-	
+
+def which(program):
+    import os
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None  

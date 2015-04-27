@@ -8,6 +8,7 @@ import random,sys,os
 from argParser import *
 from tools import *
 ap = ArgParser(sys.argv)
+from asrpipelinedb_api import *
 
 
 def cdf(state_prob):
@@ -73,16 +74,29 @@ def run_test():
     print d
 
 
-def run_asr_bayes(ap):
-    print "77: run_asr_bayes"
-    for d in ap.params["msa_algorithms"]:
-        for m in ap.params["raxml_models"]:
-            print "\n. Sampling Bayesian Ancestors. . .", d, m
-            runid = get_runid(d,m)
-            for a in ap.params["ingroup"]:
-                [startsite,stopsite] = get_boundary_sites( get_phylippath(d), ap.params["seedtaxa"][a] )
-                    
-                ancdir = d + "/asr." + m + "/tree1"
+def run_asr_bayes(con, ap):
+    #print "77: run_asr_bayes"
+    cur = con.cursor()
+    sql = "select id, name from AlignmentMethods"
+    cur.execute(sql)
+    x = cur.fetchall()
+    for ii in x:
+        """Get the seed sequence, and then find the start and end sites."""
+        alid = ii[0]
+        alname = ii[1]
+        
+        sql = "select modelid, name from PhyloModels"
+        cur.execute(sql)
+        y = cur.fetchall()
+        for jj in y:
+            modelid = jj[0]
+            modelname = jj[1]
+        
+            print "\n. Sampling Bayesian Ancestors. . .", alname, modelname
+            runid = get_runid(alname,modelname)
+                        
+            for a in ap.params["ingroup"]:                    
+                ancdir = alname + "/asr." + modelname + "/tree1"
                 if False == os.path.exists( ancdir ):
                     continue
                 if False == os.path.exists( ancdir + "/BAYES_SAMPLES" ):
@@ -90,18 +104,18 @@ def run_asr_bayes(ap):
                 for f in os.listdir(ancdir):
                     if f.__contains__(".dat"):
 
-                        print d + "/asr." + m + "/tree1/" + f            
-                        data = get_pp_distro(d + "/asr." + m + "/tree1/" + f)
+                        print alname + "/asr." + modelname + "/tree1/" + f            
+                        data = get_pp_distro(alname + "/asr." + modelname + "/tree1/" + f)
                         if data.keys().__len__() < 1:
                             print "I found no data in the ancestral file ", f
                         n = 100                        
-                        fout = open(d + "/asr." + m + "/tree1/BAYES_SAMPLES/bayes." + f, "w")
-                        mls = get_ml_sequence(data, start=startsite, stop=stopsite)
+                        fout = open(alname + "/asr." + modelname + "/tree1/BAYES_SAMPLES/bayes." + f, "w")
+                        mls = get_ml_sequence_from_file(alname + "/asr." + modelname + "/tree1/" + f)
                         shortname = f.split(".")[0]
                         fout.write(">" + shortname + "ML_ancestral_sequence\n")
                         fout.write(mls + "\n")
                         for ii in range(0, n):
-                            fout.write(">" + shortname + ".posterior.sample." + ii.__str__() + "\n")
+                            fout.write(">" + shortname + ".posterior.sample." + alname.__str__() + "\n")
                             l = sample_data( data ) 
                             fout.write(l + "\n")
 
