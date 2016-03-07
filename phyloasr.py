@@ -57,7 +57,7 @@ def write_raxml_commands(con):
             command += " -s " + phypath
             command += " -n " + runid
             command += " -w " + here + "/" + msa
-            command += " -e 0.001"
+            command += " -e 0.01"
             command += " -m " + model
             command += " -p 12345"
             constraint_tree = get_setting_values(con, "constraint_tree")
@@ -553,15 +553,23 @@ def check_asr_output(con):
                 cur.execute(sql) 
                 con.commit()
                 
+                """Get the ID of the ancestor we just inserted."""
                 sql = "select id from Ancestors where almethod=" + msaid.__str__() + " and phylomodel=" + modelid.__str__() + " and name='Node" + nodenum.__str__() + "'"
                 cur.execute(sql)
                 ancid = cur.fetchone()[0]
                 
+                """Create a table for this ancestor's PP values."""
+                tablename = "AncestralStates" + ancid.__str__()
+                sql = "create table if not exists " + tablename.__str__() + "(site INT, state CHAR, pp FLOAT)"
+                cur.execute(sql)
+                con.commit()
+                
                 for site in ssp:
                     for state in ssp[site]:
                         pp = ssp[site][state]
-                        sql = "insert into AncestralStates (ancid, site, state, pp) values("
-                        sql += ancid.__str__() + "," + site.__str__() + ",'" + state + "',"
+                        sql = "insert or replace into " + tablename + " (site, state, pp) values("
+                        sql += site.__str__() + ",'"
+                        sql += state + "',"
                         sql += pp.__str__() + ")"
                         cur.execute(sql)
                 con.commit()
@@ -973,7 +981,6 @@ def match_ancestors_across_models(con):
             for node in t.nodes():
                 if node.is_leaf() == False and node.level() > 0:                    
                     sql = "select id from Ancestors where name='Node" + node.label + "' and almethod=" + msaid.__str__() + " and phylomodel=" + modelid.__str__()
-                    print "976:", modelid, msaid, node.label
                     cur.execute(sql)
                     ancid = cur.fetchone()[0]
                     ancid_childrenids[ancid] = []
@@ -1007,6 +1014,44 @@ def match_ancestors_across_models(con):
         for anc2 in ancid_matches[anc1]:
             sql = "insert into AncestorsAcrossModels (ancid, same_ancid) values(" + anc1.__str__() + "," + anc2.__str__() + ")"
             cur.execute(sql)
+    con.commit()
+    
+def compute_tree_distances(con):
+    cur = con.cursor()
+    cur.execute("insert or replace into TreeDistanceMetrics(metricid, name) values(1, 'symmetric')")
+    cur.execute("insert or replace into TreeDistanceMetrics(metricid, name) values(2, 'euclidean')")
+    con.commit()
+    
+    treeid_dendropytree = {}
+    sql = "select id, almethod, phylomodelid, newick from UnsupportedMlPhylogenies"
+    con.execute(sql)
+    x = cur.fetchall()
+    for ii in x:
+        treeid = ii[0]
+        t = Tree()
+        t.read_from_string(newick, "newick")
+        treeid_dendropytree[treeid] = t
+        
+    for ii in treeid_dendropytree:
+        treeii = treeid_dendropytree[ii]
+        this_row = []
+        for jj in treeid_dendropytree:
+            treejj = treeid_dendropytree[jj]
+            
+            """Symmetric Distance"""
+            distance = treeii.symmetric_difference(treejj)
+            """Store the computed distance in the database."""
+            sql = "insert into TreeDistances(metricid, treeida, treeidb, distance) values("
+            sql += "1," + ii.__str__() + "," + jj.__str__() + "," + distance.__str__() + ")"
+            cur.execute(sql)
+
+            """Euclidean Distance"""
+            distance = treeii.euclidean_distance(treejj)
+            """Store the computed distance in the database."""
+            sql = "insert into TreeDistances(metricid, treeida, treeidb, distance) values("
+            sql += "2," + ii.__str__() + "," + jj.__str__() + "," + distance.__str__() + ")"
+            cur.execute(sql)
+    
     con.commit()
                         
                         

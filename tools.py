@@ -15,18 +15,6 @@ def run_script(path):
     else:
         exe = ap.params["run_exe"] + " " + path
     
-    # to-do: why does version 1 fail on the Johnson lab server?
-    
-    #
-    # version 1
-    #
-    #args = exe.split()
-    #proc = subprocess.Popen( args, preexec_fn=os.setsid ) # see http://pymotw.com/2/subprocess/
-    #proc.wait()
-    
-    #
-    # version 2
-    #
     os.system(exe)
 
 def run_subprocess(command):
@@ -55,35 +43,35 @@ def get_sd(values):
 
 
 def get_runid(dir, model):
-    nick = DIR_nick[dir]
+    nick = get_msa_nickname(dir)
     runid = nick + "." + model
     return runid
 
-def get_phylippath(DIR):
-    nick = DIR_nick[DIR]
-    return DIR + "/" + ap.params["geneid"] + SEP + nick + SEP + "phylip"
+def get_phylippath(dir):
+    nick = get_msa_nickname(dir)
+    return dir + "/" + ap.params["geneid"] + SEP + nick + SEP + "phylip"
 
-def get_fastapath(DIR):
-    nick = DIR_nick[DIR]
-    return DIR + "/" + ap.params["geneid"] + SEP + nick + SEP + "fasta"
+def get_fastapath(dir):
+    nick = get_msa_nickname(dir)
+    return dir + "/" + ap.params["geneid"] + SEP + nick + SEP + "fasta"
 
-def get_trimmed_phylippath(DIR):
-    nick = DIR_nick[DIR]
-    return DIR + "/" + ap.params["geneid"] + SEP + nick + SEP + "trim" + SEP + "phylip"
+def get_trimmed_phylippath(dir):
+    nick = get_msa_nickname(dir)
+    return dir + "/" + ap.params["geneid"] + SEP + nick + SEP + "trim" + SEP + "phylip"
 
-def get_trimmed_fastapath(DIR):
-    nick = DIR_nick[DIR]
-    return DIR + "/" + ap.params["geneid"] + SEP + nick + SEP + "trim" + SEP + "fasta"
+def get_trimmed_fastapath(dir):
+    nick = get_msa_nickname(dir)
+    return dir + "/" + ap.params["geneid"] + SEP + nick + SEP + "trim" + SEP + "fasta"
 
-def get_raxml_phylippath(DIR):
+def get_raxml_phylippath(dir):
     """The phylip path for the MSA used in RAxML"""
-    nick = DIR_nick[DIR]
-    return DIR + "/" + ap.params["geneid"] + SEP + nick + SEP + "raxml" + SEP + "phylip"
+    nick = get_msa_nickname(dir)
+    return dir + "/" + ap.params["geneid"] + SEP + nick + SEP + "raxml" + SEP + "phylip"
 
-def get_raxml_fastapath(DIR):
+def get_raxml_fastapath(dir):
     """The fasta path for the MSA used in RAxML"""
-    nick = DIR_nick[DIR]
-    return DIR + "/" + ap.params["geneid"] + SEP + nick + SEP + "raxml" + SEP + "fasta"
+    nick = get_msa_nickname(dir)
+    return dir + "/" + ap.params["geneid"] + SEP + nick + SEP + "raxml" + SEP + "fasta"
 
 def get_seed_sequence(con, msaid):
     cur = con.cursor()
@@ -287,7 +275,7 @@ def get_ml_sequence(site_states_probs):
 def get_site_ml(con, ancid, skip_indels = True):
     """Returns the hashtable; key = site, value = tuple of (mlstate, mlpp)"""
     cur = con.cursor()
-    sql = "select site, state, pp from AncestralStates where ancid=" + ancid.__str__()
+    sql = "select site, state, pp from AncestralStates" + ancid.__str__()
     cur.execute(sql)
     x = cur.fetchall()
     site_tuple = {}
@@ -550,5 +538,6 @@ def get_ancestral_matches(con, ancid1, ancid2):
             for model in models:
                 if model in msa_model_match1[msa] and model in msa_model_match2[msa]:
                     matches.append( (msa_model_match1[msa][model], msa_model_match2[msa][model]) )
-    
     return matches
+
+

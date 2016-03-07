@@ -242,8 +242,6 @@ def verify_erg_seqs(con, ap):
         ogstring = ogstring[0: ogstring.__len__()-1 ]
     taxa = ogstring.split(",")
 
-    print "245:", taxa
-
     """Check that each member of the group definition exists in the original sequences."""
     for t in taxa:
         taxonid = get_taxonid(con, t)
@@ -315,6 +313,12 @@ def write_msa_commands(con):
     
     p = "SCRIPTS/msas.commands.sh"
     fout = open(p, "w")
+
+    es = get_setting_values(con, "ergseqpath")
+    if es == None:
+        write_error(con, "I cannot find your original sequence path in the settings. Error 229")
+        exit()
+    ergseqpath = es[0]
     
     sql = "select id, name, exe_path from AlignmentMethods"
     cur.execute(sql)
@@ -323,13 +327,10 @@ def write_msa_commands(con):
         msaid = ii[0]
         msa = ii[1]
         exe = ii[2]
-            
-        es = get_setting_values(con, "ergseqpath")
-        if es == None:
-            write_error(con, "I cannot find your original sequence path in the settings. Error 229")
-            exit()
-        ergseqpath = es[0]
-            
+        
+        if exe == "": # a user-specified alignment:
+            continue
+                  
         if msa == "muscle":            
             fout.write(exe + " -maxhours 5 -in " + ergseqpath + " -out " + get_fastapath(msa) + "\n")
         elif msa == "prank":
@@ -338,6 +339,7 @@ def write_msa_commands(con):
             fout.write(exe + " -num_threads 4 " + ergseqpath + " > " + get_fastapath(msa) + "\n")
         elif msa == "mafft": 
             fout.write(exe + " --thread 4 --auto " + ergseqpath + " > " + get_fastapath(msa) + "\n")
+        
     fout.close()
     return p
     #os.system("mpirun -np 4 --machinefile hosts.txt /common/bin/mpi_dispatch SCRIPTS/msas.commands.sh")
@@ -433,12 +435,12 @@ def map_sequences(seqa, seqb):
             print "\n. Error 410", lasta, lastb
             print "1:", seqa
             print "2:", seqb
-            exit()
+            return []
         elif (lasta < seqa.__len__() and seqa[lasta-1] == "-") or (lastb < seqb.__len__() and seqb[lastb-1] == "-"):
             print "Error 412", lasta, lastb
             print "1:", seqa
             print "2:", seqb
-            exit()
+            return []
         else:
             matches.append( (lasta,lastb) )
             lasta += 1
@@ -475,11 +477,6 @@ def build_site_map(con):
     cur.execute(sql)
     con.commit()
     
-    #
-    # continue here -- build a map of all characters to all characters,
-    # rather than just seed sites to seed sites
-    # but do this in a future build.
-    #
     for aa in almethod_taxa_seq:
         for bb in almethod_taxa_seq:
             if aa == bb:

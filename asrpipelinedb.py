@@ -19,6 +19,7 @@ def build_db(dbpath):
     cur.execute("create table if not exists Settings(keyword TEXT, value TEXT)")
     cur.execute("create table if not exists Log(id INTEGER primary key, time DATETIME DEFAULT CURRENT_TIMESTAMP,  message TEXT, code INT)")
     cur.execute("create table if not exists ErrorLog(id INTEGER primary key, time DATETIME DEFAULT CURRENT_TIMESTAMP,  message TEXT, code INT)")
+    cur.execute("create table if not exists CheckPoints(checkpoint FLOAT, time FLOAT)")
     
     # Sequence Alignment
     """Note: each Taxa can have only one sequence; see the 'unique' modified on taxonid table fields."""
@@ -65,6 +66,9 @@ def build_db(dbpath):
     cur.execute("create table if not exists TreeAlpha(mltreeid INTEGER, alpha FLOAT)")
     cur.execute("create table if not exists TreePP(mltreeid INTEGER, pp FLOAT)")
     
+    cur.execute("create table if not exists TreeDistanceMetrics(metricid INTEGER primary key, name TEXT unique)")
+    cur.execute("create table if not exists TreeDistances(metricid INTEGER, treeida INTEGER, treeidb INTEGER, distance FLOAT)")
+        
     # a list of branch support methods, such as aLRT and PP
     cur.execute("create table if not exists BranchSupportMethods(id INTEGER primary key autoincrement, name TEXT unique)")
     
@@ -96,7 +100,6 @@ def build_db(dbpath):
         This table is useful when searching for occurrances of a known mutation, or for rapidly displaying
         all known mutation information (for example in Django)."""
     cur.execute("create table if not exists MutationIndex(ancid1 INTEGER, ancid2 INTEGER, mlstate1 TEXT, mlstate2 TEXT, state1pp FLOAT, state2pp FLOAT)")
-    
     
     """Tables to store comparisons of ancestral sites."""
     cur.execute("create table if not exists CompareAncestors(alias1 TEXT, alias2 TEXT)")
