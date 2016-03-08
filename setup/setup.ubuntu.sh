@@ -76,7 +76,6 @@ git clone https://project-lazarus.googlecode.com/git lazarus
 # PAML
 cd $COMMON/lazarus/paml/src
 make
-cd /
 export PATH=$COMMON/lazarus/paml/src/:$PATH
 
 # R

@@ -1,2 +1,2 @@
-dendropy
+dendropy==3.12.3
 cogent
