@@ -6,14 +6,14 @@
 ##############################################################
 
 export ASR_PIPELINE_DIR=$HOME/asr-pipeline/
-export COMMON=/common/
+export COMMON=$HOME/common/
 
 cd $HOME
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
 chmod +x Miniconda3-latest-Linux-x86_64.sh
 ./Miniconda3-latest-Linux-x86_64.sh
 
-conda create --name=asr-pipeline python=2.7 numpy scipy biopython
+conda create -y --name=asr-pipeline python=2.7 numpy scipy biopython
 source activate asr-pipeline
 
 
