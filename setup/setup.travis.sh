@@ -5,9 +5,9 @@
 #
 ##############################################################
 
+export ASR_PIPELINE_DIR=$TRAVIS_BUILD_DIR
 export MINCONDA_HOME=$HOME/miniconda3/
-export ASR_PIPELINE_DIR=$HOME/asr-pipeline/
-export COMMON=$HOME/common/
+export COMMON=$TRAVIS_BUILD_DIR/common/
 
 cd $HOME
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
@@ -79,10 +79,6 @@ git clone https://project-lazarus.googlecode.com/git lazarus
 cd $COMMON/lazarus/paml/src
 make
 export PATH=$COMMON/lazarus/paml/src/:$PATH
-
-# R
-sudo apt-get install r-base
-export PATH=/usr/bin/R:$PATH
 
 cd $ASR_PIPELINE_DIR
 python setup.py install

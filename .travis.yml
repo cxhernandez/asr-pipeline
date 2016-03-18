@@ -1,0 +1,9 @@
+language: python
+sudo: false
+r:
+  - release
+python:
+  - "2.7"
+
+script:
+  - source setup/setup.travis.sh
